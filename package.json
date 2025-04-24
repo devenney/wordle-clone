@@ -1,28 +1,27 @@
 {
   "name": "wordle-clone",
-  "version": "0.0.1",
-  "description": "A Wordle clone for educational purposes",
-  "main": "index.js",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/devenney/wordle-clone.git"
-  },
-  "keywords": [
-    "react",
-    "tailwind",
-    "wordle"
-  ],
-  "author": "Brendan Devenney <brendan@devenney.io>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/devenney/wordle-clone/issues"
-  },
-  "homepage": "https://github.com/devenney/wordle-clone#readme",
   "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "vite": "^6.3.1"
   }
 }
