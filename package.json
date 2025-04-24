@@ -20,5 +20,9 @@
   "bugs": {
     "url": "https://github.com/devenney/wordle-clone/issues"
   },
-  "homepage": "https://github.com/devenney/wordle-clone#readme"
+  "homepage": "https://github.com/devenney/wordle-clone#readme",
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
 }
