@@ -1,12 +1,47 @@
-# React + Vite
+# Wordle Clone
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Feature Checklist
 
-Currently, two official plugins are available:
+## 🧩 Wordle Clone — Feature Progress Tracker
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### ✅ Game Logic & Core Functionality
 
-## Expanding the ESLint configuration
+- [x] 6x5 grid layout generated from state
+- [x] Guesses tracked using React state
+- [x] Keyboard input (letters, Backspace, Enter)
+- [x] Advance to next row on valid guess
+- [x] Evaluate guess against solution (green/yellow/gray logic)
+- [ ] Detect win condition (guess === word)
+- [ ] Detect loss condition (no guesses left)
+- [ ] Prevent input after game ends
+- [ ] Restart or reset game after win/loss
+- [ ] Prevent duplicate guesses
+- [ ] Validate guess is a real word
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 🎨 Visual Output & Feedback
+
+- [x] Color tiles based on match evaluation
+- [ ] Animate tile reveal on Enter
+- [ ] Highlight active row visually
+- [ ] Display win/loss result message
+
+### ⌨️ Input UX & Keyboard State
+
+- [x] Physical keyboard input updates guesses
+- [ ] On-screen keyboard with clickable keys
+- [ ] Color key states (green/yellow/gray)
+- [ ] Disable typing after game ends
+
+### 📦 Word Data & Game Content
+
+- [x] Load word from mock fetch on mount
+- [ ] Use dynamic solution (with backend or such)
+- [ ] Rotate word (seeded by date/time)
+- [ ] Optional hard mode (reuse hint letters)
+
+### 🌱 Extras & Stretch Goals
+
+- [ ] Dark mode toggle
+- [ ] Share result as emoji grid (🟩🟨⬜)
+- [ ] Streak tracker or stats
+- [ ] Title screen or intro animation
