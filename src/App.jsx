@@ -293,7 +293,12 @@ function App() {
         </div>
 
         {/* Message container */}
-        <div className="w-full max-w-xs text-center mx-auto mt-4 h-20 flex items-center justify-center pt-10">
+        <div className="w-full max-w-md text-center mx-auto mt-4 h-20 flex items-center justify-center pt-20">
+          {/* Virtual Keyboard */}
+          <div className="keyboard-wrapper h-[150px]">
+            {!gameOver && <Keyboard onKey={handleKey} />}
+          </div>
+
           {gameOver && (
             <span className="text-2xl text-center w-full">
               {gameWon ? (
@@ -323,11 +328,6 @@ function App() {
               </span>
             </span>
           )}
-        </div>
-
-        {/* Virtual Keyboard */}
-        <div className="keyboard-wrapper h-[200px]">
-          {!gameOver && <Keyboard onKey={handleKey} />}
         </div>
 
         {/* Toast Notification */}
