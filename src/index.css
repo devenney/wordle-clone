@@ -7,3 +7,9 @@ body {
   padding: 0;
   overflow: hidden;
 }
+
+.safe-flex-screen {
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+}

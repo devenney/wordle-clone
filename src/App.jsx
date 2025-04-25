@@ -248,7 +248,7 @@ function App() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center h-screen safe-flex-screen">
         {/* Game grid */}
         <div className="flex flex-col items-center justify-center space-y-2">
           {Array.from({ length: NUM_ROWS }).map((_, rowIndex) => (
@@ -294,11 +294,6 @@ function App() {
 
         {/* Message container */}
         <div className="w-full max-w-md text-center mx-auto mt-4 h-20 flex items-center justify-center pt-20">
-          {/* Virtual Keyboard */}
-          <div className="keyboard-wrapper h-[150px]">
-            {!gameOver && <Keyboard onKey={handleKey} />}
-          </div>
-
           {gameOver && (
             <span className="text-2xl text-center w-full">
               {gameWon ? (
@@ -328,6 +323,11 @@ function App() {
               </span>
             </span>
           )}
+
+          {/* Virtual Keyboard */}
+          <div className="keyboard-wrapper h-[100px]">
+            {!gameOver && <Keyboard onKey={handleKey} />}
+          </div>
         </div>
 
         {/* Toast Notification */}
