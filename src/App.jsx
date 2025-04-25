@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
 
 const FIVE_WORDS_URL =
@@ -17,11 +17,23 @@ function App() {
   const [gameWon, setGameWon] = useState(false);
   const [toast, setToast] = useState(null);
   const [isInvalidWord, setIsInvalidWord] = useState(false);
+  const [vh, setVh] = useState(window.innerHeight * 0.01);
 
   const nonEmptyGuesses = useMemo(
     () => guesses.filter((entry) => entry.length > 0).length,
     [guesses]
   );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setVh(window.innerHeight * 0.01);
+    };
+
+    handleResize(); // Call once on mount
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     fetch(FIVE_WORDS_URL)
@@ -66,13 +78,12 @@ function App() {
     console.log("Set word:", chosenWord);
   }, [wordList]);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
+  const handleKey = useCallback(
+    (key) => {
       if (gameOver) return;
 
-      const key = e.key.toLowerCase();
+      key = key.toLowerCase();
 
-      // Type (only allow A-Z)
       if (/^[a-z]{1}$/.test(key)) {
         setGuesses((prev) => {
           const updated = [...prev];
@@ -83,8 +94,7 @@ function App() {
         });
       }
 
-      // Delete
-      if (key == "backspace") {
+      if (key === "backspace") {
         setGuesses((prev) => {
           const updated = [...prev];
           updated[currentRow] = updated[currentRow].slice(0, -1);
@@ -92,27 +102,21 @@ function App() {
         });
       }
 
-      // Submit
-      if (key == "enter") {
+      if (key === "enter") {
         if (guesses[currentRow].length === WORD_LENGTH) {
-          // Test for real word
           if (!wordList.includes(guesses[currentRow])) {
-            console.log("word not in wordList");
             setToast("This word is not in the word list!");
             setIsInvalidWord(true);
             return;
           }
 
-          // Test for duplicate word
           if (guesses.slice(0, currentRow).includes(guesses[currentRow])) {
-            console.log("repeat word");
             setToast("This word has already been guessed!");
             setIsInvalidWord(true);
             return;
           }
 
-          // Test for win condition
-          if (guesses[currentRow] == word) {
+          if (guesses[currentRow] === word) {
             setGameWon(true);
             setGameOver(true);
           }
@@ -137,17 +141,23 @@ function App() {
 
           if (currentRow + 1 === NUM_ROWS) {
             setGameOver(true);
-            console.log("Game is over after %d guesses", currentRow);
             return;
           }
 
           setCurrentRow((prev) => prev + 1);
         }
       }
+    },
+    [guesses, currentRow, word, wordList, gameOver]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      handleKey(e.key);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [guesses, currentRow, word, wordList, gameOver]);
+  }, [handleKey]);
 
   // Hide toast after 2 seconds
   useEffect(() => {
@@ -163,6 +173,32 @@ function App() {
     // Once the shake animation is done, remove the shake class
     e.target.classList.remove("animate-shake");
     setIsInvalidWord(false);
+  };
+
+  const Keyboard = ({ onKey }) => {
+    const rows = [
+      ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+      ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+      ["Enter", "z", "x", "c", "v", "b", "n", "m", "Backspace"],
+    ];
+
+    return (
+      <div className="mt-4 space-y-2">
+        {rows.map((row, rowIndex) => (
+          <div key={rowIndex} className="flex justify-center gap-1">
+            {row.map((key) => (
+              <button
+                key={key}
+                className="bg-gray-300 rounded px-2 py-2 min-w-[32px] text-center text-sm font-bold uppercase active:bg-gray-500"
+                onClick={() => onKey(key)}
+              >
+                {key === "Backspace" ? "⌫" : key}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -243,6 +279,9 @@ function App() {
             </span>
           )}
         </div>
+
+        {/* Virtual Keyboard */}
+        <Keyboard onKey={handleKey} />
 
         {/* Toast Notification */}
         {toast && (
