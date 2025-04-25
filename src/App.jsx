@@ -182,17 +182,27 @@ function App() {
       ["Enter", "z", "x", "c", "v", "b", "n", "m", "Backspace"],
     ];
 
+    const getLabel = (key) => {
+      if (key === "Enter") return "⏎";
+      if (key === "Backspace") return "⌫";
+      return key.toUpperCase();
+    };
+
     return (
-      <div className="mt-4 space-y-2">
+      <div className="space-y-2 px-2 w-full max-w-md mx-auto">
         {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex justify-center gap-1">
+          <div
+            key={rowIndex}
+            className="flex justify-center gap-1 w-full overflow-hidden"
+          >
             {row.map((key) => (
               <button
                 key={key}
-                className="bg-gray-300 rounded px-2 py-2 min-w-[32px] text-center text-sm font-bold uppercase active:bg-gray-500"
                 onClick={() => onKey(key)}
+                className="flex-1 max-w-[10%] min-w-[32px] sm:min-w-[40px] px-2 py-3 bg-gray-300 rounded-lg text-lg sm:text-xl font-bold uppercase active:bg-gray-500"
+                style={{ whiteSpace: "nowrap" }}
               >
-                {key === "Backspace" ? "⌫" : key}
+                {getLabel(key)}
               </button>
             ))}
           </div>
