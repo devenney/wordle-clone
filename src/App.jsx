@@ -103,6 +103,14 @@ function App() {
             return;
           }
 
+          // Test for duplicate word
+          if (guesses.slice(0, currentRow).includes(guesses[currentRow])) {
+            console.log("repeat word");
+            setToast("This word has already been guessed!");
+            setIsInvalidWord(true);
+            return;
+          }
+
           // Test for win condition
           if (guesses[currentRow] == word) {
             setGameWon(true);
