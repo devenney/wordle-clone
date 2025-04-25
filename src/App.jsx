@@ -1,37 +1,67 @@
 import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 
-function fetchWord() {
-  // Avoiding CORS issues, returning a placeholder value.
-  return Promise.resolve("genie");
-}
+const FIVE_WORDS_URL =
+  "https://cheaderthecoder.github.io/5-Letter-words/words.json";
 
 function App() {
   const NUM_ROWS = 6;
   const WORD_LENGTH = 5;
 
+  const [wordList, setWordList] = useState(Array);
   const [word, setWord] = useState("");
   const [guesses, setGuesses] = useState(Array(NUM_ROWS).fill(""));
   const [currentRow, setCurrentRow] = useState(0);
   const [evaluations, setEvaluations] = useState(Array(NUM_ROWS).fill(0)); // 0 = Default, 1 = Correct, 2 = Close, 3 = Wrong
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-
   const nonEmptyGuesses = useMemo(
     () => guesses.filter((entry) => entry.length > 0).length,
     [guesses]
   );
 
   useEffect(() => {
-    fetchWord()
-      .then((word) => {
-        setWord(word);
-        console.log("Fetched word: ", word);
+    fetch(FIVE_WORDS_URL)
+      .then((response) => response.json())
+      .then((responseJson) => {
+        setWordList(responseJson.words);
+        console.log("Fetched word list, length %d", responseJson.words.length);
       })
-      .catch((err) => {
-        console.error("Failed to fetch word: ", err);
-      });
-  }, []); // Ensure we run only once.
+      .catch((err) => console.error("Failed to fetch words:", err));
+  }, []);
+
+  function getTodaySeed() {
+    const today = new Date();
+    return `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
+  }
+
+  function seededRandom(seed) {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const x = Math.sin(hash) * 10000;
+    return x - Math.floor(x);
+  }
+
+  useEffect(() => {
+    if (wordList.length === 0) return;
+
+    const seed = getTodaySeed();
+    const rand = seededRandom(seed);
+    const index = Math.floor(rand * wordList.length);
+    const chosenWord = wordList[index];
+
+    console.log(
+      "We have randomly selected index %d (seed %s, rand %s)",
+      index,
+      seed,
+      rand
+    );
+
+    setWord(chosenWord);
+    console.log("Set word:", chosenWord);
+  }, [wordList]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -102,61 +132,75 @@ function App() {
 
   return (
     <>
-      <div className="flex items-center justify-center h-screen">
-        {/* Main content */}
-        <div className="space-y-2 w-full max-w-xs">
-          {/* Game grid */}
-          <div className="space-y-2 w-full max-w-xs">
-            {Array.from({ length: NUM_ROWS }).map((_, rowIndex) => (
-              <div key={rowIndex} className="flex gap-2 justify-center">
-                {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
-                  const letter = guesses[rowIndex][colIndex] || "";
-                  const result = evaluations[rowIndex][colIndex];
+      <div className="flex flex-col items-center justify-center h-screen">
+        {/* Game grid */}
+        <div className="flex flex-col items-center justify-center space-y-2">
+          {Array.from({ length: NUM_ROWS }).map((_, rowIndex) => (
+            <div key={rowIndex} className="flex gap-2 justify-center">
+              {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
+                const letter = guesses[rowIndex][colIndex] || "";
+                const result = evaluations[rowIndex][colIndex];
 
-                  let bgClass = "";
-                  switch (result) {
-                    case 1:
-                      bgClass = "bg-green-500";
-                      break;
-                    case 2:
-                      bgClass = "bg-yellow-500";
-                      break;
-                    case 3:
-                      bgClass = "bg-red-500";
-                      break;
-                  }
+                let bgClass = "";
+                switch (result) {
+                  case 1:
+                    bgClass = "bg-green-500";
+                    break;
+                  case 2:
+                    bgClass = "bg-yellow-500";
+                    break;
+                  case 3:
+                    bgClass = "bg-red-500";
+                    break;
+                }
 
-                  return (
-                    <span
-                      key={colIndex}
-                      className={
-                        "w-12 h-12 border border-gray-400 flex items-center justify-center text-2xl font-bold " +
-                        bgClass
-                      }
-                    >
-                      {letter}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
+                return (
+                  <span
+                    key={colIndex}
+                    className={
+                      "w-12 h-12 border border-gray-400 flex items-center justify-center text-2xl font-bold " +
+                      bgClass
+                    }
+                  >
+                    {letter.toUpperCase()}
+                  </span>
+                );
+              })}
+            </div>
+          ))}
+        </div>
 
-            {gameOver && (
-              <span className="text-2xl text-center p-4 mt-4 max-w-xs w-full mx-auto">
-                {gameWon ? (
+        {/* Message container */}
+        <div className="w-full max-w-xs text-center mx-auto mt-4 h-20 flex items-center justify-center pt-10">
+          {gameOver && (
+            <span className="text-2xl text-center w-full">
+              {gameWon ? (
+                <>
                   <div className="bg-green-100 text-green-700 border-2 border-green-500 p-4 rounded-lg">
                     {`You won in ${nonEmptyGuesses} guess${
                       nonEmptyGuesses > 1 ? "es" : ""
                     }!`}
                   </div>
-                ) : (
-                  <div className="bg-red-100 text-red-700 border-2 border-red-500 p-4 rounded-lg">
-                    {`You lost! Today's word was ${word}.`}
-                  </div>
-                )}
+                </>
+              ) : (
+                <div className="bg-red-100 text-red-700 border-2 border-red-500 p-4 rounded-lg">
+                  You lost!
+                </div>
+              )}
+              <span>
+                Today's word was{" "}
+                <a
+                  href={`https://en.wiktionary.org/wiki/${word}`}
+                  className="underline font-bold"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {word}
+                </a>
+                .
               </span>
-            )}
-          </div>
+            </span>
+          )}
         </div>
       </div>
     </>
