@@ -15,6 +15,9 @@ function App() {
   const [evaluations, setEvaluations] = useState(Array(NUM_ROWS).fill(0)); // 0 = Default, 1 = Correct, 2 = Close, 3 = Wrong
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [isInvalidWord, setIsInvalidWord] = useState(false);
+
   const nonEmptyGuesses = useMemo(
     () => guesses.filter((entry) => entry.length > 0).length,
     [guesses]
@@ -92,6 +95,14 @@ function App() {
       // Submit
       if (key == "enter") {
         if (guesses[currentRow].length === WORD_LENGTH) {
+          // Test for real word
+          if (!wordList.includes(guesses[currentRow])) {
+            console.log("word not in wordList");
+            setToast("This word is not in the word list!");
+            setIsInvalidWord(true);
+            return;
+          }
+
           // Test for win condition
           if (guesses[currentRow] == word) {
             setGameWon(true);
@@ -128,7 +139,23 @@ function App() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [guesses, currentRow, word, gameOver]);
+  }, [guesses, currentRow, word, wordList, gameOver]);
+
+  // Hide toast after 2 seconds
+  useEffect(() => {
+    if (toast) {
+      const timeout = setTimeout(() => {
+        setToast(null);
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [toast]);
+
+  const handleAnimationEnd = (e) => {
+    // Once the shake animation is done, remove the shake class
+    e.target.classList.remove("animate-shake");
+    setIsInvalidWord(false);
+  };
 
   return (
     <>
@@ -136,7 +163,13 @@ function App() {
         {/* Game grid */}
         <div className="flex flex-col items-center justify-center space-y-2">
           {Array.from({ length: NUM_ROWS }).map((_, rowIndex) => (
-            <div key={rowIndex} className="flex gap-2 justify-center">
+            <div
+              key={rowIndex}
+              className={`flex gap-2 justify-center ${
+                isInvalidWord && rowIndex === currentRow ? "animate-shake" : ""
+              }`}
+              onAnimationEnd={handleAnimationEnd} // Listen for the end of the shake animation
+            >
               {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
                 const letter = guesses[rowIndex][colIndex] || "";
                 const result = evaluations[rowIndex][colIndex];
@@ -202,6 +235,13 @@ function App() {
             </span>
           )}
         </div>
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white p-4 rounded-md shadow-md">
+            {toast}
+          </div>
+        )}
       </div>
     </>
   );
