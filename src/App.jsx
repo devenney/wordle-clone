@@ -1,6 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
 
+const GUESS_WRONG = 1;
+const GUESS_CLOSE = 2;
+const GUESS_CORRECT = 3;
+
 const FIVE_WORDS_URL =
   "https://cheaderthecoder.github.io/5-Letter-words/words.json";
 
@@ -12,28 +16,43 @@ function App() {
   const [word, setWord] = useState("");
   const [guesses, setGuesses] = useState(Array(NUM_ROWS).fill(""));
   const [currentRow, setCurrentRow] = useState(0);
-  const [evaluations, setEvaluations] = useState(Array(NUM_ROWS).fill(0)); // 0 = Default, 1 = Correct, 2 = Close, 3 = Wrong
+  const [evaluations, setEvaluations] = useState(
+    Array(NUM_ROWS)
+      .fill(null)
+      .map(() => Array(WORD_LENGTH).fill(0))
+  );
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [toast, setToast] = useState(null);
   const [isInvalidWord, setIsInvalidWord] = useState(false);
-  const [vh, setVh] = useState(window.innerHeight * 0.01);
 
   const nonEmptyGuesses = useMemo(
     () => guesses.filter((entry) => entry.length > 0).length,
     [guesses]
   );
 
-  useEffect(() => {
-    const handleResize = () => {
-      setVh(window.innerHeight * 0.01);
-    };
+  const letterState = useMemo(() => {
+    let states = {};
 
-    handleResize(); // Call once on mount
-    window.addEventListener("resize", handleResize);
+    for (let i = 0; i < evaluations.length; i++) {
+      for (let j = 0; j < WORD_LENGTH; j++) {
+        const letter = guesses[i][j];
+        if (!letter) continue;
 
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+        const letterState = evaluations[i][j];
+
+        if (states[letter] === undefined) {
+          states[letter] = 0;
+        }
+
+        if (letterState > states[letter]) {
+          states[letter] = letterState;
+        }
+      }
+    }
+
+    return states;
+  }, [guesses, evaluations]);
 
   useEffect(() => {
     fetch(FIVE_WORDS_URL)
@@ -125,11 +144,11 @@ function App() {
 
           guesses[currentRow].split("").forEach((character, index) => {
             if (character === word[index]) {
-              evaluation.push(1);
+              evaluation.push(GUESS_CORRECT);
             } else if (word.includes(character)) {
-              evaluation.push(2);
+              evaluation.push(GUESS_CLOSE);
             } else {
-              evaluation.push(3);
+              evaluation.push(GUESS_WRONG);
             }
           });
 
@@ -188,6 +207,20 @@ function App() {
       return key.toUpperCase();
     };
 
+    const getKeyClass = (key) => {
+      const keyState = letterState[key];
+      switch (keyState) {
+        case GUESS_WRONG:
+          return "bg-red-300 active:bg-red-500";
+        case GUESS_CLOSE:
+          return "bg-yellow-300 active:bg-yellow-500";
+        case GUESS_CORRECT:
+          return "bg-green-300 active:bg-green-500";
+        default:
+          return "bg-gray-300 active:bg-gray-500";
+      }
+    };
+
     return (
       <div className="space-y-2 px-2 w-full max-w-md mx-auto">
         {rows.map((row, rowIndex) => (
@@ -199,7 +232,9 @@ function App() {
               <button
                 key={key}
                 onClick={() => onKey(key)}
-                className="flex-1 max-w-[10%] min-w-[32px] sm:min-w-[40px] px-2 py-3 bg-gray-300 rounded-lg text-lg sm:text-xl font-bold uppercase active:bg-gray-500"
+                className={`flex-1 max-w-[10%] min-w-[32px] sm:min-w-[40px] px-2 py-3 rounded-lg text-lg sm:text-xl font-bold uppercase ${getKeyClass(
+                  key
+                )}`}
                 style={{ whiteSpace: "nowrap" }}
               >
                 {getLabel(key)}
@@ -230,14 +265,14 @@ function App() {
 
                 let bgClass = "";
                 switch (result) {
-                  case 1:
-                    bgClass = "bg-green-500";
+                  case GUESS_WRONG:
+                    bgClass = "bg-red-500";
                     break;
-                  case 2:
+                  case GUESS_CLOSE:
                     bgClass = "bg-yellow-500";
                     break;
-                  case 3:
-                    bgClass = "bg-red-500";
+                  case GUESS_CORRECT:
+                    bgClass = "bg-green-500";
                     break;
                 }
 
@@ -291,7 +326,9 @@ function App() {
         </div>
 
         {/* Virtual Keyboard */}
-        <Keyboard onKey={handleKey} />
+        <div className="keyboard-wrapper h-[200px]">
+          {!gameOver && <Keyboard onKey={handleKey} />}
+        </div>
 
         {/* Toast Notification */}
         {toast && (
