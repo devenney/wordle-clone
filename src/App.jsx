@@ -5,6 +5,9 @@ const GUESS_WRONG = 1;
 const GUESS_CLOSE = 2;
 const GUESS_CORRECT = 3;
 
+const TOAST_COLOUR_DEFAULT = "bg-gray-500";
+const TOAST_COLOUR_ERROR = "bg-red-500";
+
 const FIVE_WORDS_URL =
   "https://cheaderthecoder.github.io/5-Letter-words/words.json";
 
@@ -23,7 +26,8 @@ function App() {
   );
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState("");
+  const [toastColour, setToastColour] = useState("bg-gray-500");
   const [isInvalidWord, setIsInvalidWord] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -177,12 +181,14 @@ function App() {
       if (key === "enter") {
         if (guesses[currentRow].length === WORD_LENGTH) {
           if (!wordList.includes(guesses[currentRow])) {
+            setToastColour(TOAST_COLOUR_ERROR);
             setToast("This word is not in the word list!");
             setIsInvalidWord(true);
             return;
           }
 
           if (guesses.slice(0, currentRow).includes(guesses[currentRow])) {
+            setToastColour(TOAST_COLOUR_ERROR);
             setToast("This word has already been guessed!");
             setIsInvalidWord(true);
             return;
@@ -236,6 +242,7 @@ function App() {
     if (toast) {
       const timeout = setTimeout(() => {
         setToast(null);
+        setToastColour(TOAST_COLOUR_DEFAULT);
       }, 2000);
       return () => clearTimeout(timeout);
     }
@@ -298,6 +305,57 @@ function App() {
       </div>
     );
   };
+
+  const handleShare = useCallback(() => {
+    // Generate shareable result with emojis
+    const generateShareableResult = () => {
+      console.log("nonEmptyGuesses:", nonEmptyGuesses);
+
+      let resultText = `I ${gameWon ? "won" : "lost"} today's Wordle Clone${
+        gameWon ? ` in ${nonEmptyGuesses} guesses` : ""
+      }.\n\n`;
+
+      // Map each guess to corresponding emojis
+      guesses.slice(0, nonEmptyGuesses).forEach((guess, rowIndex) => {
+        const rowEvaluation = evaluations[rowIndex];
+        const guessResult = guess
+          .split("")
+          .map((_, index) => {
+            switch (rowEvaluation[index]) {
+              case GUESS_CORRECT:
+                return "🍏";
+              case GUESS_CLOSE:
+                return "🍊";
+              case GUESS_WRONG:
+                return "🍅";
+              default:
+                return "";
+            }
+          })
+          .join("");
+        resultText += `${guessResult}\n`; // Add each guess's result to the resultText
+      });
+
+      resultText +=
+        "\nTry it yourself at https://devenney.github.io/wordle-clone/.";
+
+      return resultText;
+    };
+
+    const resultText = generateShareableResult();
+
+    // Copy result to clipboard
+    navigator.clipboard
+      .writeText(resultText)
+      .then(() => {
+        setToast("Result copied to clipboard!");
+      })
+      .catch((error) => {
+        setToastColour(TOAST_COLOUR_ERROR);
+        setToast("Failed to copy the result. Try again.");
+        console.error("Error copying result to clipboard:", error);
+      });
+  }, [gameWon, guesses, nonEmptyGuesses, evaluations]);
 
   return (
     <>
@@ -377,6 +435,18 @@ function App() {
                   </a>
                   .
                 </span>
+
+                {/* Share Result Button */}
+                <div className="mt-4">
+                  {gameOver && (
+                    <button
+                      onClick={handleShare}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    >
+                      Share Result
+                    </button>
+                  )}
+                </div>
               </span>
             )}
 
@@ -388,7 +458,9 @@ function App() {
 
           {/* Toast Notification */}
           {toast && (
-            <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white p-4 rounded-md shadow-md">
+            <div
+              className={`fixed top-5 left-1/2 transform -translate-x-1/2 ${toastColour} text-white p-4 rounded-md shadow-md`}
+            >
               {toast}
             </div>
           )}
