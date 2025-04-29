@@ -45,7 +45,15 @@ function App() {
       // Check if state is stale.
       if (parsedState.word === word) {
         setGuesses(parsedState.guesses);
-        setEvaluations(parsedState.evaluations);
+
+        const newEvaluations = parsedState.guesses.map((guess) => {
+          if (!guess || guess.length !== word.length) {
+            return Array(word.length).fill(0);
+          }
+          return evaluateGuess(word, guess); // <-- Clean call!
+        });
+        setEvaluations(newEvaluations);
+
         setCurrentRow(parsedState.currentRow);
         setGameOver(parsedState.gameOver);
         setGameWon(parsedState.gameWon);
@@ -154,6 +162,47 @@ function App() {
     console.log("Set word:", chosenWord);
   }, [wordList]);
 
+  function evaluateGuess(answer, guess) {
+    const evaluation = [];
+
+    const answerLetters = answer.split("");
+
+    // First pass - check for correct matches
+    guess.split("").forEach((character, index) => {
+      console.log(
+        "character: %s, word at index (%d): %s",
+        character,
+        index,
+        answer[index]
+      );
+      if (character === answer[index]) {
+        console.log("evaluated %s === %s to true", character, answer[index]);
+        evaluation[index] = GUESS_CORRECT;
+        answerLetters[index] = null; // Expend the letter
+      }
+    });
+
+    // Second pass - check for close matches
+    guess.split("").forEach((character, index) => {
+      console.log(
+        "Testing evaluation at index %d (%s)",
+        index,
+        evaluation[index]
+      );
+      if (evaluation[index] !== GUESS_CORRECT) {
+        const answerLettersIndex = answerLetters.indexOf(character);
+        if (answerLettersIndex !== -1) {
+          evaluation[index] = GUESS_CLOSE;
+          answerLetters[answerLettersIndex] = null; // Expend the letter
+        } else {
+          evaluation[index] = GUESS_WRONG;
+        }
+      }
+    });
+
+    return evaluation;
+  }
+
   const handleKey = useCallback(
     (key) => {
       if (gameOver) return;
@@ -199,17 +248,7 @@ function App() {
             setGameOver(true);
           }
 
-          const evaluation = [];
-
-          guesses[currentRow].split("").forEach((character, index) => {
-            if (character === word[index]) {
-              evaluation.push(GUESS_CORRECT);
-            } else if (word.includes(character)) {
-              evaluation.push(GUESS_CLOSE);
-            } else {
-              evaluation.push(GUESS_WRONG);
-            }
-          });
+          const evaluation = evaluateGuess(word, guesses[currentRow]);
 
           setEvaluations((prev) => {
             const updated = [...prev];
