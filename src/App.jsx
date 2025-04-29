@@ -25,6 +25,59 @@ function App() {
   const [gameWon, setGameWon] = useState(false);
   const [toast, setToast] = useState(null);
   const [isInvalidWord, setIsInvalidWord] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Check for stored state on component mount
+  useEffect(() => {
+    // We need to load today's word first to see if the state is stale.
+    if (word === "") return;
+
+    const storedState = localStorage.getItem("gameState");
+    console.log("Loading game state:", storedState);
+    if (storedState) {
+      const parsedState = JSON.parse(storedState);
+      console.log("Parsed state:", parsedState);
+
+      // Check if state is stale.
+      if (parsedState.word === word) {
+        setGuesses(parsedState.guesses);
+        setEvaluations(parsedState.evaluations);
+        setCurrentRow(parsedState.currentRow);
+        setGameOver(parsedState.gameOver);
+        setGameWon(parsedState.gameWon);
+      }
+    }
+
+    setLoaded(true);
+  }, [word]);
+
+  // Store game state
+  useEffect(() => {
+    // Don't write unless we've already tried to load.
+    if (!loaded) return;
+    console.log(
+      "Loaded is true, state is currently:",
+      guesses,
+      evaluations,
+      currentRow
+    );
+
+    const storeGameState = () => {
+      const gameState = {
+        word,
+        guesses,
+        evaluations,
+        currentRow,
+        gameOver,
+        gameWon,
+      };
+
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+    };
+
+    console.log("Storing game state:", guesses);
+    storeGameState();
+  }, [loaded, word, currentRow, guesses, evaluations, gameOver, gameWon]);
 
   const nonEmptyGuesses = useMemo(
     () => guesses.filter((entry) => entry.length > 0).length,
@@ -248,95 +301,101 @@ function App() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center h-screen safe-flex-screen">
-        {/* Game grid */}
-        <div className="flex flex-col items-center justify-center space-y-2">
-          {Array.from({ length: NUM_ROWS }).map((_, rowIndex) => (
-            <div
-              key={rowIndex}
-              className={`flex gap-2 justify-center ${
-                isInvalidWord && rowIndex === currentRow ? "animate-shake" : ""
-              }`}
-              onAnimationEnd={handleAnimationEnd} // Listen for the end of the shake animation
-            >
-              {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
-                const letter = guesses[rowIndex][colIndex] || "";
-                const result = evaluations[rowIndex][colIndex];
+      {loaded ? (
+        <div className="flex flex-col items-center justify-center h-screen safe-flex-screen">
+          {/* Game grid */}
+          <div className="flex flex-col items-center justify-center space-y-2">
+            {Array.from({ length: NUM_ROWS }).map((_, rowIndex) => (
+              <div
+                key={rowIndex}
+                className={`flex gap-2 justify-center ${
+                  isInvalidWord && rowIndex === currentRow
+                    ? "animate-shake"
+                    : ""
+                }`}
+                onAnimationEnd={handleAnimationEnd} // Listen for the end of the shake animation
+              >
+                {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
+                  const letter = guesses[rowIndex][colIndex] || "";
+                  const result = evaluations[rowIndex][colIndex];
 
-                let bgClass = "";
-                switch (result) {
-                  case GUESS_WRONG:
-                    bgClass = "bg-red-500";
-                    break;
-                  case GUESS_CLOSE:
-                    bgClass = "bg-yellow-500";
-                    break;
-                  case GUESS_CORRECT:
-                    bgClass = "bg-green-500";
-                    break;
-                }
+                  let bgClass = "";
+                  switch (result) {
+                    case GUESS_WRONG:
+                      bgClass = "bg-red-500";
+                      break;
+                    case GUESS_CLOSE:
+                      bgClass = "bg-yellow-500";
+                      break;
+                    case GUESS_CORRECT:
+                      bgClass = "bg-green-500";
+                      break;
+                  }
 
-                return (
-                  <span
-                    key={colIndex}
-                    className={
-                      "w-12 h-12 border border-gray-400 flex items-center justify-center text-2xl font-bold " +
-                      bgClass
-                    }
-                  >
-                    {letter.toUpperCase()}
-                  </span>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+                  return (
+                    <span
+                      key={colIndex}
+                      className={
+                        "w-12 h-12 border border-gray-400 flex items-center justify-center text-2xl font-bold " +
+                        bgClass
+                      }
+                    >
+                      {letter.toUpperCase()}
+                    </span>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
 
-        {/* Message container */}
-        <div className="w-full max-w-md text-center mx-auto mt-4 h-20 flex items-center justify-center pt-20">
-          {gameOver && (
-            <span className="text-2xl text-center w-full">
-              {gameWon ? (
-                <>
-                  <div className="bg-green-100 text-green-700 border-2 border-green-500 p-4 rounded-lg">
-                    {`You won in ${nonEmptyGuesses} guess${
-                      nonEmptyGuesses > 1 ? "es" : ""
-                    }!`}
+          {/* Message container */}
+          <div className="w-full max-w-md text-center mx-auto mt-4 h-20 flex items-center justify-center pt-20">
+            {gameOver && (
+              <span className="text-2xl text-center w-full">
+                {gameWon ? (
+                  <>
+                    <div className="bg-green-100 text-green-700 border-2 border-green-500 p-4 rounded-lg">
+                      {`You won in ${nonEmptyGuesses} guess${
+                        nonEmptyGuesses > 1 ? "es" : ""
+                      }!`}
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-red-100 text-red-700 border-2 border-red-500 p-4 rounded-lg">
+                    You lost!
                   </div>
-                </>
-              ) : (
-                <div className="bg-red-100 text-red-700 border-2 border-red-500 p-4 rounded-lg">
-                  You lost!
-                </div>
-              )}
-              <span>
-                Today's word was{" "}
-                <a
-                  href={`https://en.wiktionary.org/wiki/${word}`}
-                  className="underline font-bold"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {word}
-                </a>
-                .
+                )}
+                <span>
+                  Today's word was{" "}
+                  <a
+                    href={`https://en.wiktionary.org/wiki/${word}`}
+                    className="underline font-bold"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {word}
+                  </a>
+                  .
+                </span>
               </span>
-            </span>
+            )}
+
+            {/* Virtual Keyboard */}
+            <div className="keyboard-wrapper h-[100px]">
+              {!gameOver && <Keyboard onKey={handleKey} />}
+            </div>
+          </div>
+
+          {/* Toast Notification */}
+          {toast && (
+            <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white p-4 rounded-md shadow-md">
+              {toast}
+            </div>
           )}
-
-          {/* Virtual Keyboard */}
-          <div className="keyboard-wrapper h-[100px]">
-            {!gameOver && <Keyboard onKey={handleKey} />}
-          </div>
         </div>
-
-        {/* Toast Notification */}
-        {toast && (
-          <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-500 text-white p-4 rounded-md shadow-md">
-            {toast}
-          </div>
-        )}
-      </div>
+      ) : (
+        <></>
+      )}
     </>
   );
 }
