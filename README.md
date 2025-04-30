@@ -37,11 +37,11 @@
 - [x] Use dynamic solution (with backend or such)
 - [x] Rotate word (seeded by date/time)
 - [ ] Optional hard mode (reuse hint letters)
-- [ ] 2-pass evaluation strategy
+- [x] 2-pass evaluation strategy
 
 ### 🌱 Extras & Stretch Goals
 
 - [ ] Dark mode toggle
-- [ ] Share result as emoji grid (🟩🟨⬜)
+- [x] Share result as emoji grid (🟩🟨⬜)
 - [ ] Streak tracker or stats
 - [ ] Title screen or intro animation
