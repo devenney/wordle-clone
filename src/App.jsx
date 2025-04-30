@@ -351,7 +351,9 @@ function App() {
       console.log("nonEmptyGuesses:", nonEmptyGuesses);
 
       let resultText = `I ${gameWon ? "won" : "lost"} today's Wordle Clone${
-        gameWon ? ` in ${nonEmptyGuesses} guesses` : ""
+        gameWon
+          ? ` in ${nonEmptyGuesses} guess${nonEmptyGuesses > 1 ? "es" : ""}`
+          : ""
       }.\n\n`;
 
       // Map each guess to corresponding emojis
