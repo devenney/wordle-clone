@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
+import { WORDS } from "./wordList";
 
 const GUESS_WRONG = 1;
 const GUESS_CLOSE = 2;
@@ -8,14 +9,27 @@ const GUESS_CORRECT = 3;
 const TOAST_COLOUR_DEFAULT = "bg-gray-500";
 const TOAST_COLOUR_ERROR = "bg-red-500";
 
-const FIVE_WORDS_URL =
-  "https://cheaderthecoder.github.io/5-Letter-words/words.json";
+// Build a per-day seed from the current UTC date so that the chosen word is the
+// same for every user and rotates at midnight UTC.
+function getTodaySeed() {
+  const today = new Date();
+  return `${today.getUTCDate()}-${today.getUTCMonth()}-${today.getUTCFullYear()}`;
+}
+
+function seededRandom(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const x = Math.sin(hash) * 10000;
+  return x - Math.floor(x);
+}
 
 function App() {
   const NUM_ROWS = 6;
   const WORD_LENGTH = 5;
 
-  const [wordList, setWordList] = useState(Array);
+  const [wordList] = useState(WORDS);
   const [word, setWord] = useState("");
   const [guesses, setGuesses] = useState(Array(NUM_ROWS).fill(""));
   const [currentRow, setCurrentRow] = useState(0);
@@ -118,30 +132,6 @@ function App() {
 
     return states;
   }, [guesses, evaluations]);
-
-  useEffect(() => {
-    fetch(FIVE_WORDS_URL)
-      .then((response) => response.json())
-      .then((responseJson) => {
-        setWordList(responseJson.words);
-        console.log("Fetched word list, length %d", responseJson.words.length);
-      })
-      .catch((err) => console.error("Failed to fetch words:", err));
-  }, []);
-
-  function getTodaySeed() {
-    const today = new Date();
-    return `${today.getDate()}-${today.getMonth()}-${today.getFullYear()}`;
-  }
-
-  function seededRandom(seed) {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const x = Math.sin(hash) * 10000;
-    return x - Math.floor(x);
-  }
 
   useEffect(() => {
     if (wordList.length === 0) return;
